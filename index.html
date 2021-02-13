@@ -127,6 +127,7 @@
 
     const data_locations = [
       {
+        type: 'Gym Location',
         "country": "RU",
         "name": "Moscow",
         "lat": "55.75222",
@@ -136,6 +137,7 @@
         }
       },
       {
+        type: 'Born Location',
         "country": "JP",
         "name": "Tokyo",
         "lat": "35.6895",
@@ -145,6 +147,7 @@
         }
       },
       {
+        type: 'Twitter Location',
         "country": "US",
         "name": "New York City",
         "lat": "40.71427",
@@ -183,18 +186,40 @@
         shadow: false,
         useHTML: true,
         padding: 0,
-        pointFormat:
-          `
-            <span class="f32">
-              <span class="flag {point.properties.hc-key}"></span>
-            </span> 
-            {point.name}<br>
-            <span style="font-size:16px">{point.value}</span>
-          `,
+        useHTML: true,
         positioner: function () {
           return { x: 0, y: 250 };
+        },
+
+        formatter: function(){
+          if(this.point.series.name === 'Location'){
+            return `
+              ${this.point.type}<br>
+              <span style="font-size:16px">${this.point.name}</span>
+            `;
+          }else if(this.point.series.name === 'History'){
+            return `
+              ${this.point.series.name}<br>
+              <span style="font-size:16px">${this.point.name}</span>
+            `;
+          }
+
+          return `
+            <span class="f32">
+              <span class="flag ${this.point.properties['hc-key']}"></span>
+            </span> 
+            ${this.point.name}<br>
+            <span style="font-size:16px">Google trends: ${this.point.value}</span>
+          `;
         }
       },
+
+      // tooltip: {
+      //   formatter: function(){
+      //     console.log(this);
+      //     return 'Position is ' + this.x + ', ' + this.long;
+      //   }
+      // },
 
       colorAxis: {
         min: 0,
