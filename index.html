@@ -45,123 +45,64 @@
   <script src="https://code.highcharts.com/maps/modules/data.js"></script>
   <script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
 
+  <!-- import sample json -->
+  <script src="json.js"></script> 
+
   <script>
-    const tempGoogleTrends = [];
+    const trends = json.trends_by_region.map(function(el){
+      return {
+        geoCode: el.geoCode,
+        name: el.name,
+        value: el.interest < 1 ? 1 : el.interest
+      };
+    });
+    
+    const history = json.history.map(function(el){
+      return {
+        name: el.event.name,
+        lat: el.location.lat,
+        lon: el.location.long,
 
-
-    const data_googleTrends = [
-      {
-        "code3": "AFG",
-        "name": "Afghanistan",
-        "value": 498,
-        "code": "AF"
-      },
-      {
-        "code3": "USA",
-        "name": "United States",
-        "value": 83,
-        "code": "US"
-      },
-      {
-        "code3": "VNM",
-        "name": "Vietnam",
-        "value": 256,
-        "code": "VN"
-      },
-      {
-        "code3": "RUS",
-        "name": "Russian Federation",
-        "value": 10,
-        "code": "RU"
-      },
-      {
-        "code3": "CHN",
-        "name": "China",
-        "value": 156,
-        "code": "CH"
-      },
-    ];
-
-    const data_history = [
-      {
-        name: 'London',
-        lat: 51.507222,
-        lon: -0.1275,
+        data: {...el},
 
         marker: {
-          symbol: 'diamond',
-          fillColor: '#29a329'
+          symbol: true ? 'diamond' : 'circle', // history point shape depending on knockout
+          fillColor: el.winner ? '#29a329' : '#ff4d4d' // history point color depending on winning
         }
-      },
-      {
-        name: 'Brussel',
-        lat: 50.8985400058829,
-        lon: 4.483022689819336,
+      };
+    });
 
-        marker: {
-          symbol: 'diamond',
-          fillColor: '#29a329'
-        }
-      },
+    const locations = [
       {
-        name: 'Pristina',
-        lat: 42.574261,
-        lon: 21.028887,
-
-        marker: {
-          symbol: 'diamond',
-          fillColor: '#29a329'
-        }
-      },
-      {
-        name: 'Newington',
-        lat: -37.92715,
-        lon: 143.82485,
-
-        marker: {
-          symbol: 'circle',
-          fillColor: '#ff4d4d'
-        }
-      }
-    ];
-
-    const data_locations = [
-      {
-        type: 'Gym Location',
-        "country": "RU",
-        "name": "Moscow",
-        "lat": "55.75222",
-        "lon": "37.61556",
-        marker: {
-          symbol: 'url(gym.png)'
-        }
-      },
-      {
-        type: 'Born Location',
-        "country": "JP",
-        "name": "Tokyo",
-        "lat": "35.6895",
-        "lon": "139.69171",
+        type: 'Birth Location',
+        name: json.birth_location.city,
+        lat: json.birth_location.lat,
+        lon: json.birth_location.long,
         marker: {
           symbol: 'url(location.png)'
         }
       },
       {
         type: 'Twitter Location',
-        "country": "US",
-        "name": "New York City",
-        "lat": "40.71427",
-        "lon": "-74.00597",
+        name: '',
+        lat: json.twitter_location.lat,
+        lon: json.twitter_location.long,
         marker: {
           symbol: 'url(twitter.png)'
         }
       },
+      // {
+      //   type: 'Gym Location',
+      //   country: RU,
+      //   name: Moscow,
+      //   lat: 55.75222,
+      //   lon: 37.61556,
+      //   marker: {
+      //     symbol: 'url(gym.png)'
+      //   }
+      // },
     ];
-
-    data_googleTrends.forEach(function (el) {
-      el.value = (el.value < 1 ? 1 : el.value);
-    });
-
+    
     const map = Highcharts.mapChart('container', {
       chart: {
         map: 'custom/world',
@@ -195,12 +136,14 @@
           if(this.point.series.name === 'Location'){
             return `
               ${this.point.type}<br>
-              <span style="font-size:16px">${this.point.name}</span>
+              <span style="font-size:14px">${this.point.name}</span>
             `;
           }else if(this.point.series.name === 'History'){
             return `
               ${this.point.series.name}<br>
-              <span style="font-size:16px">${this.point.name}</span>
+              <span style="font-size:14px;">${this.point.name}</span><br>
+              <span style="font-size: 12px;">(${this.point.data.event.promotion})</span><br>
+              <span style="font-size: 10px;">${this.point.data.time}</span>
             `;
           }
 
@@ -209,17 +152,10 @@
               <span class="flag ${this.point.properties['hc-key']}"></span>
             </span> 
             ${this.point.name}<br>
-            <span style="font-size:16px">Google trends: ${this.point.value}</span>
+            <span style="font-size:14px">Google trends: ${this.point.value}</span>
           `;
         }
       },
-
-      // tooltip: {
-      //   formatter: function(){
-      //     console.log(this);
-      //     return 'Position is ' + this.x + ', ' + this.long;
-      //   }
-      // },
 
       colorAxis: {
         min: 0,
@@ -239,13 +175,14 @@
           type: 'mappoint',
           name: 'History',
           zIndex: 30,
-          lineWidth: 2,
+          lineWidth: 1,
+          color: 'rgba(0, 51, 204, 0.3)',
 
           marker: {
             radius: 6,
           },
 
-          data: data_history,
+          data: history,
         },
 
         { // Location
@@ -257,13 +194,13 @@
             fillColor: '#0F0'
           },
 
-          data: data_locations
+          data: locations
         },
 
 
         { // Trends
-          data: data_googleTrends,
-          joinBy: ['iso-a3', 'code3'],
+          data: trends,
+          joinBy: ['iso-a2', 'geoCode'],
           name: 'Google trends',
           states: {
             hover: {
