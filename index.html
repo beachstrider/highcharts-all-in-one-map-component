@@ -45,6 +45,8 @@
   <script src="https://code.highcharts.com/maps/modules/data.js"></script>
   <script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script> 
+  
   <!-- import sample json -->
   <script src="json.js"></script> 
 
@@ -143,7 +145,7 @@
               ${this.point.series.name}<br>
               <span style="font-size:14px;">${this.point.name}</span><br>
               <span style="font-size: 12px;">(${this.point.data.event.promotion})</span><br>
-              <span style="font-size: 10px;">${this.point.data.time}</span>
+              <span style="font-size: 10px;">${moment(this.point.data.event.date).format('MMM DD, YYYY')}</span>
             `;
           }
 
