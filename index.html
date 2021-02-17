@@ -145,7 +145,34 @@
               ${this.point.series.name}<br>
               <span style="font-size:14px;">${this.point.name}</span><br>
               <span style="font-size: 12px;">(${this.point.data.event.promotion})</span><br>
-              <span style="font-size: 10px;">${moment(this.point.data.event.date).format('MMM DD, YYYY')}</span>
+              <span style="font-size: 10px;">
+                ${moment(this.point.data.event.date).format('MMM DD, YYYY')} - dur: ${this.point.data.time}
+              </span><br>
+              <span style="font-size: 12px;">
+                Fighter: ${this.point.data.winner
+                  ? this.point.data.winning_fighter_name
+                  : this.point.data.losing_fighter_name}
+              </span><br>         
+              <span style="font-size: 12px;">
+                Opponent: ${this.point.data.winner
+                  ? this.point.data.losing_fighter_name
+                  : this.point.data.winning_fighter_name}
+              </span><br>
+              <span style="font-size: 12px;">
+                Game Result: ${this.point.data.winner ? 'Win' : 'Lose'}  
+              </span><br>
+              <span style="font-size: 12px;">
+                ${this.point.data.rounds}  
+              </span><br>
+              <span style="
+                display: block;
+                font-size: 12px;
+                text-indent: -57px;
+                padding-left: 57px;
+              ">
+                Location: ${this.point.data.location.city}  
+              </span>
+              
             `;
           }
 
