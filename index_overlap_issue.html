@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All in One Map Component</title>
+
+  <link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+  <link href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://github.com/downloads/lafeber/world-flags-sprite/flags32.css" />
+
+  <style>
+    #container {
+      height: 500px;
+      min-width: 310px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .highcharts-tooltip>span {
+      padding: 10px;
+      white-space: normal !important;
+      width: 200px;
+    }
+
+    .loading {
+      margin-top: 10em;
+      text-align: center;
+      color: gray;
+    }
+
+    .f32 .flag {
+      vertical-align: middle !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.6/proj4.js"></script>
+  <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+  <script src="https://code.highcharts.com/maps/modules/data.js"></script>
+  <script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script> 
+  
+  <!-- import sample json -->
+  <script src="json.js"></script> 
+
+  <script>
+    const trends = json.trends_by_region.map(function(el){
+      return {
+        geoCode: el.geoCode,
+        name: el.name,
+        value: el.interest < 1 ? 1 : el.interest
+      };
+    });
+    
+    const history = json.history.map(function(el){
+      return {
+        name: el.event.name,
+        lat: el.location.lat,
+        lon: el.location.long,
+
+        data: {...el},
+
+        marker: {
+          symbol: true ? 'diamond' : 'circle', // history point shape depending on knockout
+          fillColor: el.winner ? '#29a329' : '#ff4d4d' // history point color depending on winning
+        }
+      };
+    });
+
+    const locations = [
+      {
+        type: 'Birth Location',
+        name: json.birth_location.city,
+        lat: json.birth_location.lat,
+        lon: json.birth_location.long,
+        marker: {
+          symbol: 'url(location.png)'
+        }
+      },
+      {
+        type: 'Twitter Location',
+        name: '',
+        lat: json.twitter_location.lat,
+        lon: json.twitter_location.long,
+        marker: {
+          symbol: 'url(twitter.png)'
+        }
+      },
+      // {
+      //   type: 'Gym Location',
+      //   country: RU,
+      //   name: Moscow,
+      //   lat: 55.75222,
+      //   lon: 37.61556,
+      //   marker: {
+      //     symbol: 'url(gym.png)'
+      //   }
+      // },
+    ];
+    
+    const map = Highcharts.mapChart('container', {
+      chart: {
+        map: 'custom/world',
+        borderWidth: 1,
+        animation: false
+      },
+
+      title: {
+        text: 'Fighter Information'
+      },
+
+      mapNavigation: {
+        enabled: true,
+        buttonOptions: {
+          verticalAlign: 'top'
+        }
+      },
+
+      tooltip: {
+        backgroundColor: 'none',
+        borderWidth: 0,
+        shadow: false,
+        useHTML: true,
+        padding: 0,
+        useHTML: true,
+        positioner: function () {
+          return { x: 0, y: 250 };
+        },
+
+        formatter: function(){
+          if(this.point.series.name === 'Location'){
+            return `
+              ${this.point.type}<br>
+              <span style="font-size:14px">${this.point.name}</span>
+            `;
+          }else if(this.point.series.name === 'History'){
+            return `
+              ${this.point.series.name}<br>
+              <span style="font-size:14px;">${this.point.name}</span><br>
+              <span style="font-size: 12px;">(${this.point.data.event.promotion})</span><br>
+              <span style="font-size: 10px;">
+                ${moment(this.point.data.event.date).format('MMM DD, YYYY')} - dur: ${this.point.data.time}
+              </span><br>
+              <span style="font-size: 12px;">
+                Fighter: ${this.point.data.winner
+                  ? this.point.data.winning_fighter_name
+                  : this.point.data.losing_fighter_name}
+              </span><br>         
+              <span style="font-size: 12px;">
+                Opponent: ${this.point.data.winner
+                  ? this.point.data.losing_fighter_name
+                  : this.point.data.winning_fighter_name}
+              </span><br>
+              <span style="font-size: 12px;">
+                Game Result: ${this.point.data.winner ? 'Win' : 'Lose'}  
+              </span><br>
+              <span style="font-size: 12px;">
+                ${this.point.data.rounds}  
+              </span><br>
+              <span style="
+                display: block;
+                font-size: 12px;
+                text-indent: -57px;
+                padding-left: 57px;
+              ">
+                Location: ${this.point.data.location.city}  
+              </span>
+              
+            `;
+          }
+
+          return `
+            <span class="f32">
+              <span class="flag ${this.point.properties['hc-key']}"></span>
+            </span> 
+            ${this.point.name}<br>
+            <span style="font-size:14px">Google trends: ${this.point.value}</span>
+          `;
+        }
+      },
+
+      colorAxis: {
+        min: 0,
+        stops: [
+          [0, '#EFEFFF'],
+          [0.5, Highcharts.getOptions().colors[0]],
+          [1, Highcharts.color(Highcharts.getOptions().colors[0]).brighten(-0.5).get()]
+        ]
+      },
+
+      series: [
+        {
+          mapData: Highcharts.maps['custom/world']
+        },
+        
+        { // History
+          type: 'mappoint',
+          name: 'History',
+          zIndex: 30,
+          lineWidth: 1,
+          color: 'rgba(0, 51, 204, 0.3)',
+
+          marker: {
+            radius: 6,
+          },
+
+          data: history,
+        },
+
+        { // Location
+          type: 'mappoint',
+          name: 'Location',
+          zIndex: 40,
+
+          marker: {
+            fillColor: '#0F0'
+          },
+
+          data: locations
+        },
+
+
+        { // Trends
+          data: trends,
+          joinBy: ['iso-a2', 'geoCode'],
+          name: 'Google trends',
+          states: {
+            hover: {
+              color: '#a4edba'
+            }
+          }
+        },
+      ],
+    });
+  </script>
+</body>
+
+</html>
