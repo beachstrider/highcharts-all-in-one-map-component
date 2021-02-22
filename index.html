@@ -12,12 +12,22 @@
   <link rel="stylesheet" type="text/css" href="https://github.com/downloads/lafeber/world-flags-sprite/flags32.css" />
 
   <style>
+    html, 
+    body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
     #wrapper {
-      position: relative;
-      height: 500px;
-      min-width: 310px;
-      max-width: 800px;
-      margin: 0 auto;
+      display: block;
+      position:absolute;
+      height:auto;
+      bottom:0;
+      top:0;
+      left:0;
+      right:0;
+      padding: 10px;
     }
 
     #container {
@@ -33,6 +43,8 @@
       max-width: 280px;
       height: 180px;
       padding: 10px;
+      margin-left: 10px;
+      margin-bottom: 10px;
       overflow-y: auto;
       background-color: rgba(255, 255, 255, 0.4);
       display: none;
@@ -153,7 +165,50 @@
       borderWidth: 1,
       animation: false,
       events: {
-        click: function (event) {
+        load: function(){
+          const latLons = 
+            history.map(
+              el => ({lat: el.lat, lon: el.lon})
+            ).concat(
+              locations.map(
+                el => ({lat: el.lat, lon: el.lon})
+              )
+            );
+
+          const minLat = Math.min(...latLons.map(el => el.lat));
+          const maxLat = Math.max(...latLons.map(el => el.lat));
+          const centerLat = (minLat + maxLat) / 2;
+          
+          const minLon = Math.min(...latLons.map(el => el.lon));
+          const maxLon = Math.max(...latLons.map(el => el.lon));
+          const centerLon = (minLon + maxLon) / 2;
+          
+          const posCenter = this.fromLatLonToPoint({
+            lat: centerLat, 
+            lon: centerLon
+          });
+          const posMin = this.fromLatLonToPoint({
+            lat: minLat, 
+            lon: minLon
+          });
+          const posMax = this.fromLatLonToPoint({
+            lat: maxLat, 
+            lon: maxLon
+          });
+
+          const distanceX = Math.abs(posMax.x - posMin.x);
+          const distanceY = Math.abs(posMax.y - posMin.y);
+
+          const rangeX = Math.abs(this.xAxis[0].max - this.xAxis[0].min);
+          const rangeY = Math.abs(this.yAxis[0].max - this.yAxis[0].min);
+          const zoomLevelX = distanceX / rangeX;
+          const zoomLevelY = distanceY / rangeY;
+          const zoomLevel = Math.max(zoomLevelX, zoomLevelY) / 0.9;
+          
+          this.mapZoom(zoomLevel, posCenter.x, posCenter.y);
+        },
+        click: function (e) {
+          console.log(e);
           $('.tooltip').hide();
         }
       }
@@ -191,12 +246,13 @@
         cursor: 'pointer',
         point: {
           events: {
-            click: function () {
-              console.log('this', this);
-
+            click: function (e) {
               let content;
               const tooltip = $('.tooltip');
               tooltip.empty();
+
+              console.log('this',this);
+              console.log('e',e);
 
               if (this.series.name === 'Location') {
                 content = `
