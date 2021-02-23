@@ -1,0 +1,144 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#highchartmap-wrapper {
+    display: flex;
+    position: absolute;
+    height: auto;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 20px 20px 0;
+}
+
+#highchartmap-wrapper * {
+    font-family: monospace;
+}
+
+#highchartmap-container {
+    width: calc(100% - 300px);
+    height: 100%;
+}
+
+.highchartmap-tooltip {
+    width: 300px;
+    height: 100%;
+    overflow-y: auto;
+    background-color: rgba(255, 255, 255, 0.4);
+    scrollbar-width: 3px;
+}
+
+.highchartmap-tooltip * {
+    font-family: "Lucida Grande", "Lucida Sans Unicode", Arial, Helvetica, sans-serif;
+}
+
+.highchartmap-tooltip::-webkit-scrollbar {
+    width: 5px;
+    background-color: #F5F5F5;
+}
+
+.highchartmap-tooltip::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    background-color: #F5F5F5;
+}
+
+.highchartmap-tooltip::-webkit-scrollbar-thumb {
+    background-color: #444;
+}
+
+#highchartmap-container .f32 .flag {
+    vertical-align: middle !important;
+}
+
+.highchartmap-bottom-pane {
+    position: absolute;
+    width: 50%;
+    right: 22px;
+    bottom: 22px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.highchartmap-bottom-pane>div {
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.highchartmap-bottom-pane>div:hover {
+    text-decoration: underline;
+}
+
+.highchartmap-bottom-pane>div::before {
+    content: " ";
+    content: " ";
+    width: 4px;
+    height: 4px;
+    border-radius: 4px;
+    background: black;
+    margin-right: 6px;
+}
+
+.title-history {
+    font-size: 20px;
+    font-weight: bold;
+    margin-left: 10px;
+    margin-bottom: 4px;
+}
+
+.item-history {
+    padding: 16px 10px;
+    transition: .3s;
+    cursor: default;
+}
+
+.item-history:hover:not(.active) {
+    background-color: #e6e6ff;
+}
+
+.item-history.active {
+    background-color: #d5d5d5;
+}
+
+.item-history-title {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.item-history-subtitle {
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.item-history-time {
+    font-size: 11px;
+}
+
+.highcharts-point.blinking {
+    animation-duration: 0.5s;
+    animation-name: blinking;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.highcharts-label{
+    cursor: default !important;
+}
+
+@keyframes blinking {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
