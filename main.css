@@ -20,12 +20,12 @@ html, body {
 }
 
 #highchartmap-container {
-    width: calc(100% - 300px);
+    width: calc(100% - 460px);
     height: 100%;
 }
 
 .highchartmap-tooltip {
-    width: 300px;
+    width: 460px;
     height: 100%;
     overflow-y: auto;
     background-color: rgba(255, 255, 255, 0.4);
@@ -130,6 +130,62 @@ html, body {
 .highcharts-label{
     cursor: default !important;
 }
+
+.highchart-profile-container{
+    padding: 0 10px 16px;
+}
+
+.highchartmap-tooltip hr{
+    margin: 0 10px;
+}
+
+.highchart-profile-flex{
+    display: flex;
+}
+
+.highchart-profile-image{
+    width: 160px;
+    border-radius: 6px;
+}
+
+.highchart-profile-title{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.highchart-profile-subtitle{
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.highchart-profile-image-text-wrapper{
+    padding-left: 16px;
+}
+
+.highchart-profile-text{
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.highchart-profile-text:last-child{
+    margin: 0;
+}
+
+.item-history-flex{
+    display: flex;
+    justify-content: space-between;
+}
+
+.item-history-opponent-image{
+    width: 100px;
+    border-radius: 4px;
+}
+
+
+
+
+
 
 @keyframes blinking {
     0% {

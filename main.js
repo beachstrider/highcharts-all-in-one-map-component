@@ -1,3 +1,4 @@
+console.log("json", json);
 
 // function used to group overlapped pins
 const groupBy = function (array, f) {
@@ -12,6 +13,53 @@ const groupBy = function (array, f) {
   })
 };
 
+// function used to calculate track record
+const insertTrackRecords = function(data){
+  let wins = 0;
+  let losses = 0;
+
+  for (let i = data.length - 1; i >= 0; i--) {
+    if(data[i].winner)
+      wins++;
+    else
+      losses++;
+    data[i].trackRecord = `${wins}-${losses}`;
+  }
+  return data;
+}
+
+// function used to spidering overlapped positions
+const spidering = function(data){
+  const fr = 0.3; // coordinating offset
+  const fn = 6; // point amount in first circle
+  const _data = groupBy(data, el => [el.event.location.lat, el.event.location.long]); // groupping by same lat long
+  console.log(_data);
+
+  
+  for(let i in _data){
+    if(_data[i].length > 1){
+      const lat = _data[i][0].event.location.lat;
+      const long = _data[i][0].event.location.long;
+      console.log(_data[i].length, 'lat long', lat, long);
+      
+      let r = fr;
+      let n = fn;
+      for(let j = 1; j < _data[i].length; j++){
+        m = Math.ceil((Math.sqrt(1 + 8 * j / fn) - 1) / 2);
+        r = fr * m;
+        n = fn * m;
+        const _lat = lat + r * Math.cos(2 * Math.PI * (j - 1) / n) * 0.9;
+        const _long = long - r * Math.sin(2 * Math.PI * (j - 1) / n);
+        _data[i][j].event.location.lat = _lat;
+        _data[i][j].event.location.long = _long;
+      }
+      console.log(_data[i].map(el=>[el.event.location.lat, el.event.location.long]));
+    }
+  }
+
+  return _data.flat();
+}
+
 // trends formatting
 const trends = json.trends_by_region.map(function (el) {
   return {
@@ -21,23 +69,45 @@ const trends = json.trends_by_region.map(function (el) {
   };
 });
 
-// history formatting
-const history = groupBy(json.history, (el) => [el.location.lat, el.location.lon]).map((el) => {
-  const single = el.length === 1;
-  const name = single ? el[0].event.name : el.length + ' fights overlapped';
-  const lat = el[0].location.lat;
-  const lon = el[0].location.long;
+// insert calculated track record into every item of history
+json.history = insertTrackRecords(json.history); 
+
+// spidering json history
+json.history = spidering(json.history);
+
+// format history in order to adapt it for chart input
+const history = json.history.map((el, key) => {
+  const name = el.trackRecord;
+  const lat = el.event.location.lat;
+  const lon = el.event.location.long;
   let marker = {};
-  marker.symbol = 'diamond';
-  if (single) {
-    if (el[0].winner) {
-      marker.fillColor = '#29a329';
-    } else {
-      marker.fillColor = '#ff4d4d';
-    }
+
+  switch (el.method.name) {
+    case 'KO/TKO, Punches':
+      marker.symbol = 'diamond';
+      break;
+  
+    case 'KO/TKO, Head Kick and Punches':
+      marker.symbol = 'square';
+      break;
+  
+    case 'Submission, Rear Naked Choke':
+      marker.symbol = 'triangle';
+      break;
+  
+    case 'Decision, Majority':
+      marker.symbol = 'triangle-down';
+      break;
+  
+    default:
+      marker.symbol = 'circle';
+      break;
+  }
+
+  if (el.winner) {
+    marker.fillColor = '#29a329';
   } else {
-    marker.symbol = 'square';
-    marker.fillColor = '#000';
+    marker.fillColor = '#ff4d4d';
   }
 
   return {
@@ -54,26 +124,27 @@ const history = groupBy(json.history, (el) => [el.location.lat, el.location.lon]
 // locations formatting
 const locations = [];
 // valication
-if (json.birth_location !== null) {
+if (typeof json.born !== 'undefined') {
   locations.push(
     {
-      type: 'Birth Location',
-      name: json.birth_location.city,
-      lat: json.birth_location.lat,
-      lon: json.birth_location.long,
+      type: 'Born Location',
+      name: json.born.city,
+      lat: json.born.lat + 0.05,
+      lon: json.born.long - 0.05,
       marker: {
         symbol: 'url(location.png)'
       }
     }
   );
 }
-if (json.twitter_location !== null) {
+if (typeof json.twitter_data !== 'undefined') {
   locations.push(
     {
       type: 'Twitter Location',
-      name: '',
-      lat: json.twitter_location.lat,
-      lon: json.twitter_location.long,
+      name: json.twitter_data.location.city,
+      lat: json.twitter_data.location.lat - 0.05,
+      lon: json.twitter_data.location.long - 0.05,
+      data: json.twitter_data,
       marker: {
         symbol: 'url(twitter.png)'
       }
@@ -154,17 +225,34 @@ const map = Highcharts.mapChart('highchartmap-container', {
   tooltip: {
     useHTML: true,
     formatter: function () {
-      if (this.point.series.name !== "Google trends") {
+      if (this.point.series.name === "Google trends") {
+        return `
+          <span class="f16">
+            <span class="flag ${this.point.properties['hc-key']}"></span>
+          </span>
+          <span style="margin-left: 3px;">${this.point.name}</span>
+          <div>Google trends: ${this.point.value}</div>
+        `;
+      }else if(this.point.series.name === "Location"){
+        console.log('this.point',this.point);
+        if(this.point.type === 'Born Location'){
+          return `
+            <div>Personal info here...</div>
+            <div></div>
+            <div></div>
+          `;
+        }else if(this.point.type === 'Twitter Location'){
+          return `
+            <div>Followers count: ${this.point.data.followers_count}</div>
+            <div>Following count: ${this.point.data.following_count}</div>
+            <div>Tweet count: ${this.point.data.tweet_count}</div>
+            <div>Listed count: ${this.point.data.listed_count}</div>
+          `;
+        }
+      }else{
         return false;
       }
 
-      return `
-        <span class="f16">
-          <span class="flag ${this.point.properties['hc-key']}"></span>
-        </span>
-        <span style="margin-left: 3px;">${this.point.name}</span>
-        <div>Google trends: ${this.point.value}</div>
-      `;
     },
   },
 
@@ -196,27 +284,13 @@ const map = Highcharts.mapChart('highchartmap-container', {
             });
 
             if (this.series.name === 'Location') {
-              map.mapZoom(1, this.x, this.y);
               e.target.classList.add('blinking');
             } else if (this.series.name === 'History') {
-              map.mapZoom(1, this.x, this.y);
               e.target.classList.add('blinking');
               $('.item-history').removeClass('active');
-
-              const matchedOriginalHistory = json.history.map((el, key) => ({
-                index: key,
-                ...el
-              })).filter(
-                el => (
-                  el.location.lat === this.lat && el.location.long === this.lon
-                )
-              );
-
-              matchedOriginalHistory.map(el => {
-                $(`.item-history[data-key="${el.index}"]`).addClass('active');
-              });
+              $(`.item-history[data-key="${this.index}"]`).addClass('active');
               $('.highchartmap-tooltip').animate({
-                scrollTop: $('.item-history').eq(matchedOriginalHistory[0].index).offset().top - $('.item-history').offset().top + $('.item-history').scrollTop()
+                scrollTop: $(`.item-history[data-key="${this.index}"]`).offset().top - $('.item-history').offset().top + $('.item-history').scrollTop()
               });
             } else {
               return;
@@ -236,7 +310,6 @@ const map = Highcharts.mapChart('highchartmap-container', {
       type: 'mappoint',
       name: 'History',
       zIndex: 30,
-      lineWidth: 1,
       color: 'rgba(0, 51, 204, 0.3)',
 
       marker: {
@@ -272,47 +345,72 @@ const map = Highcharts.mapChart('highchartmap-container', {
   ],
 });
 
+$('.highchartmap-tooltip').append(`
+  <div class="highchart-profile-container">
+    <div class="highchart-profile-flex">
+      <img class="highchart-profile-image" src="${json.twitter_data.profile_image_url}">
+      <div class="highchart-profile-image-text-wrapper">
+        <div class="highchart-profile-title">${json.name}</div>
+        <div class="highchart-profile-subtitle">(${json.nickname})</div>
+        <div class="highchart-profile-text">Head coach: ${json.head_coach}</div>
+        <div class="highchart-profile-text">Earnings: ${json.career_disclosed_earnings}</div>
+        <div class="highchart-profile-text">Affiliation: ${json.affiliation}</div>
+        <div class="highchart-profile-text">Birthday: ${moment(json.date_of_birth).format('MMM DD, YYYY')}</div>
+      </div>
+    </div>
+  </div>
+  <hr>
+`);
+
 $('.highchartmap-tooltip').append(
   json.history.map((el, key) => (`
     <div class="item-history" data-key="${key}">
-      <div class="item-history-title">
-        ${el.event.name}
+      <div class="item-history-flex">
+        <div class="item-history-content">
+          <div class="item-history-title">
+            (${el.trackRecord}) ${el.event.name}
+          </div>
+          <div class="item-history-subtitle">(${el.event.promotion})</div>
+          <div class="item-history-time">
+            ${moment(el.event.date).format('MMM DD, YYYY')} - dur: ${el.time}
+          </div>        
+          <div style="font-size: 12px;">
+            Opponent: 
+              ${el.winner
+                ? el.losing_fighter_name
+                : el.winning_fighter_name
+              }
+          </div>
+          <div style="font-size: 12px;">
+            Game Result: ${el.winner ? 'Win' : 'Lose'}  
+          </div>
+          <div style="font-size: 12px;">
+            Method: ${el.method.name}
+          </div>
+          <div style="font-size: 12px;">
+            ${el.rounds}  
+          </div>
+          <div style="
+            display: block;
+            font-size: 12px;
+            text-indent: -66px;
+            padding-left: 66px;
+          ">
+            Location: ${el.event.location.city}  
+          </div>
+          
+        </div>
+        ${el.opponent_twitter_data !== null
+          ? `
+            <div class="item-history-image-wrapper">
+              <img class="item-history-opponent-image" src="
+                ${el.opponent_twitter_data.profile_image_url}
+              ">
+            </div>
+          `
+          : ''
+        }
       </div>
-      <div class="item-history-subtitle">(${el.event.promotion})</div>
-      <div class="item-history-time">
-        ${moment(el.event.date).format('MMM DD, YYYY')} - dur: ${el.time}
-      </div>
-      <div style="font-size: 12px;">
-        Fighter: 
-          ${el.winner
-      ? el.winning_fighter_name
-      : el.losing_fighter_name
-    }
-      </div>         
-      <div style="font-size: 12px;">
-        Opponent: 
-          ${el.winner
-      ? el.losing_fighter_name
-      : el.winning_fighter_name
-    }
-      </div>
-      <div style="font-size: 12px;">
-        Game Result: ${el.winner ? 'Win' : 'Lose'}  
-      </div>
-      <div style="font-size: 12px;">
-        ${el.rounds}  
-      </div>
-      <div style="
-        display: block;
-        font-size: 12px;
-        text-indent: -66px;
-        padding-left: 66px;
-        max-width: 160px;
-      ">
-        Location: ${el.location.city}  
-      </div>
-      
-      <div class=""></div>
     </div>
   `)).join('')
 );
@@ -328,10 +426,10 @@ $(document).on('click', '.highchartmap-tooltip .item-history', function () {
   const point = 
     map.series
     .find(el => el.name === 'History')
-    .points.find(el => el.lat === data.location.lat && el.lon === data.location.long);
+    .points.find(el => el.lat === data.event.location.lat && el.lon === data.event.location.long);
   const pos = map.fromLatLonToPoint({
-    lat: data.location.lat,
-    lon: data.location.long
+    lat: data.event.location.lat,
+    lon: data.event.location.long
   });
   const ele = $("path.highcharts-point[d='" + point.graphic.d + "']");
 
