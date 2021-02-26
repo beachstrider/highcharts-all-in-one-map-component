@@ -80,34 +80,22 @@ const history = json.history.map((el, key) => {
   const name = el.trackRecord;
   const lat = el.event.location.lat;
   const lon = el.event.location.long;
+  const isFinish = el.method.name.includes('KO/TKO') || el.method.name.includes('Submission');
+  const isWin = el.winner;
   let marker = {};
 
-  switch (el.method.name) {
-    case 'KO/TKO, Punches':
-      marker.symbol = 'diamond';
-      break;
-  
-    case 'KO/TKO, Head Kick and Punches':
-      marker.symbol = 'square';
-      break;
-  
-    case 'Submission, Rear Naked Choke':
-      marker.symbol = 'triangle';
-      break;
-  
-    case 'Decision, Majority':
-      marker.symbol = 'triangle-down';
-      break;
-  
-    default:
-      marker.symbol = 'circle';
-      break;
-  }
-
-  if (el.winner) {
-    marker.fillColor = '#29a329';
+  if (isWin) {
+    if(isFinish){
+      marker.symbol = 'url(ko_green.png)';
+    }else{
+      marker.symbol = 'url(sb_green.png)';
+    }
   } else {
-    marker.fillColor = '#ff4d4d';
+    if(isFinish){
+      marker.symbol = 'url(ko_red.png)';
+    }else{
+      marker.symbol = 'url(sb_red.png)';
+    }
   }
 
   return {
