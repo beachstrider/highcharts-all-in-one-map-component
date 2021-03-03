@@ -12,7 +12,7 @@ html, body {
     top: 0;
     left: 0;
     right: 0;
-    padding: 20px 20px 20px 0;
+    padding: 20px 10px 20px 0;
 }
 
 #highchartmap-wrapper * {
@@ -177,11 +177,44 @@ html, body {
     justify-content: space-between;
 }
 
-.item-history-opponent-image{
+.item-history-image-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100px;
-    border-radius: 4px;
 }
 
+.item-history-opponent-image{
+    border-radius: 4px;
+    width: 100%;
+}
+
+.item-history-game-result-circle{
+    width: 20px;
+    height: 20px;
+    border-radius: 20px;
+    margin-top: 10px;
+}
+
+.item-history-game-result-circle.winner{
+    background-color: #23c517;
+}
+
+.item-history-game-result-circle.losser{
+    background-color: #d01d1d;
+}
+
+
+
+
+
+
+
+
+#highcharts-interest{
+    width: 400px;
+    height: 300px;
+}
 
 
 

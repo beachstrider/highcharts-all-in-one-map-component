@@ -197,8 +197,6 @@ const map = Highcharts.mapChart('highchartmap-container', {
     enabled: false
   },
 
-  legend: { enabled: false },
-
   title: {
     text: ''
   },
@@ -388,16 +386,17 @@ $('.highchartmap-tooltip').append(
           </div>
           
         </div>
-        ${el.opponent_twitter_data !== null
-          ? `
-            <div class="item-history-image-wrapper">
+        <div class="item-history-image-wrapper">
+          ${el.opponent_twitter_data !== null
+            ? `
               <img class="item-history-opponent-image" src="
                 ${el.opponent_twitter_data.profile_image_url}
               ">
-            </div>
-          `
-          : ''
-        }
+            `
+            : ''
+          }
+          <span class="item-history-game-result-circle ${el.winner ? 'winner' : 'losser'}"></span>
+        </div>
       </div>
     </div>
   `)).join('')
@@ -419,7 +418,11 @@ $(document).on('click', '.highchartmap-tooltip .item-history', function () {
     lat: data.event.location.lat,
     lon: data.event.location.long
   });
-  const ele = $("path.highcharts-point[d='" + point.graphic.d + "']");
+  const ele = $(".highcharts-point[x='" + point.plotX + "']");
+
+  console.log('point', point);
+  console.log('===', ".highcharts-point[x='" + point.plotX + "'][y='" + point.plotY + "']");
+  console.log('length', ele.length);
 
   $('.highchartmap-tooltip .item-history').removeClass('active');
   $(this).addClass('active');
